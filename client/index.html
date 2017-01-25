@@ -1,0 +1,113 @@
+
+<head>
+  <link rel="stylesheet" href="/client/css/styles.css">
+</head>
+<!-- <html>
+<head>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<h1>This is a heading</h1>
+<p>This is a paragraph.</p>
+
+</body>
+</html> -->
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+
+</head>
+<body>
+
+	<!-- Login Container -->
+	<div class="login" style="display:none;width:400px;margin:16pxauto;font-size: 16px;">
+	  <div class="login-triangle" style="width: 0;margin-right: auto;margin-left: auto;border: 12px solid transparent;border-bottom-color: #28d;"></div>
+	  
+	  <h2 class="login-header" style="margin-top: 0;margin-bottom: 0;background: #28d;padding: 20px;font-size: 1.4em;font-weight: normal;text-align: center;text-transform: uppercase;color: #fff;">Log in</h2>
+
+	  <form class="login-container" style="background: #ebebeb;padding: 12px;">
+	    <p style="padding: 12px;margin-top: 0;margin-bottom: 0;">
+	    <input 
+	    style="border-color: #888;box-sizing: border-box;display: block;width: 100%;border-width: 1px;border-style: solid;padding: 16px;outline: 0;font-family: inherit;font-size: 0.95em;" type="email" placeholder="Email"></p>
+	    <p style="padding: 12px;margin-top: 0;margin-bottom: 0;">
+	    <input style="border-color: #888;box-sizing: border-box;display: block;width: 100%;border-width: 1px;border-style: solid;padding: 16px;outline: 0;font-family: inherit;font-size: 0.95em;" type="password" placeholder="Password"></p>
+	    <p style="padding: 12px;margin-top: 0;margin-bottom: 0;">
+	    <input 
+	     type="submit" value="Login" style="background: #28d;border-color: transparent;color: #fff;cursor: pointer;"></p>
+	  </form>
+	</div>
+
+
+	<!-- Game Canvas  -->
+	<canvas id="ctx" class="canvas" width="500" height="500" style="border:1px solid black;"></canvas>
+
+  <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+  <script type="text/javascript">
+	// initalize connection
+	var socket = io();
+
+	//Output
+	var login = function(user, password){
+		socket.emit('login',{
+			reason: 'logged out'
+		});
+	}
+	
+	//Input
+	socket.on('serverMsg',function(data){
+		console.log(data.msg);
+	});
+
+
+  	//Login
+  	$( ".login-container" ).submit(function( event ) {
+
+  		var user = "test";
+  		var password = "testpass";
+  		//TODO VALIDATION
+  		login(user, password);
+
+  		event.preventDefault();
+	});	
+
+
+  	//Canvas
+  	// console.log('do canvas shit');
+  	var ctx = document.getElementById("ctx").getContext("2d");
+  	ctx.font = '30px Arial';
+  	socket.on('newPosition', function(data){
+		ctx.clearRect(0,0,500,500);
+		for(var i in data) {
+			var player = data[i];
+			ctx.fillText("p",player.x,player.y);
+		}
+  	});
+
+  	/*
+  	*  KeyDown Event Handler 
+  	*/
+  	document.onkeydown = function(event){
+  		if(event.keyCode === 68)
+  			socket.emit('keyPress', {inputId:'right'. state:true});
+  		else if(event.keyCode === 83)
+  			socket.emit('keyPress', {inputId:'down'. state:true});
+  		else if(event.keyCode === 65)
+  			socket.emit('keyPress', {inputId:'left'. state:true});
+  		else if(event.keyCode === 87)
+  			socket.emit('keyPress', {inputId:'up'. state:true});
+  	}
+
+  </script>
+</body>
+</html>
+
+
+
+
+
+

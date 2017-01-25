@@ -1,0 +1,11 @@
+{
+  "name": "dungeon_crawler",
+  "version": "1.0.0",
+  "description": "Simple dungeon crawler game, created in Node",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mike Dupree",
+  "license": "ISC"
+}
