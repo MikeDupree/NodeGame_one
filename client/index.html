@@ -84,24 +84,41 @@
 		ctx.clearRect(0,0,500,500);
 		for(var i in data) {
 			var player = data[i];
-			ctx.fillText("p",player.x,player.y);
+			ctx.fillText(player.number,player.x,player.y);
 		}
   	});
 
   	/*
   	*  KeyDown Event Handler 
   	*/
-  	document.onkeydown = function(event){
-  		if(event.keyCode === 68)
-  			socket.emit('keyPress', {inputId:'right'. state:true});
-  		else if(event.keyCode === 83)
-  			socket.emit('keyPress', {inputId:'down'. state:true});
-  		else if(event.keyCode === 65)
-  			socket.emit('keyPress', {inputId:'left'. state:true});
-  		else if(event.keyCode === 87)
-  			socket.emit('keyPress', {inputId:'up'. state:true});
-  	}
+  	var d = 68;
+  	var a = 65;
+  	var w = 87;
+  	var s = 83;
 
+  	document.onkeydown = function(event){
+  		if(event.keyCode === d)
+  			socket.emit('keyPress', {inputId:'right', state:true});
+  		else if(event.keyCode === s)
+  			socket.emit('keyPress', {inputId:'down', state:true});
+  		else if(event.keyCode === a)
+  			socket.emit('keyPress', {inputId:'left', state:true});
+  		else if(event.keyCode === w)
+  			socket.emit('keyPress', {inputId:'up', state:true});
+  	}
+	/*
+  	*  KeyUp Event Handler 
+  	*/
+  	document.onkeyup = function(event){
+  		if(event.keyCode === d)
+  			socket.emit('keyPress', {inputId:'right', state:false});
+  		else if(event.keyCode === s)
+  			socket.emit('keyPress', {inputId:'down', state:false});
+  		else if(event.keyCode === a)
+  			socket.emit('keyPress', {inputId:'left', state:false});
+  		else if(event.keyCode === w)
+  			socket.emit('keyPress', {inputId:'up', state:false});
+  	}
   </script>
 </body>
 </html>
