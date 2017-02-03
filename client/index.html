@@ -42,50 +42,89 @@
 	  </form>
 	</div>
 
+  <div id="console-text" style="width:500px; height:150px; border: 1px solid #000000; overflow-y: scroll; color: lawngreen; background-color: black;">
+    <div style="text-align: center;"></div>
+  </div>
 
 	<!-- Game Canvas  -->
 	<canvas id="ctx" class="canvas" width="500" height="500" style="border:1px solid black;"></canvas>
 
+  <!--Message Container-->
+  <div id="chat-text" style="width:500px; height:150px; border: 1px solid #000000; overflow-y: scroll;">
+    <div style="text-align: center;">::Message Board!::</div>
+  </div>
+  <form id="chat-form" style="padding: 5px 0 0 0;">
+    <input type="text" id="chat-input" style="width: 500px;" value="" name="message_area">
+  </form>
+
+
+  <!--SCRIPTS-->
   <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
   <script type="text/javascript">
-	// initalize connection
-	var socket = io();
 
-	//Output
-	var login = function(user, password){
-		socket.emit('login',{
-			reason: 'logged out'
-		});
-	}
-	
-	//Input
-	socket.on('serverMsg',function(data){
-		console.log(data.msg);
-	});
+    var chatText = document.getElementById('chat-text');
+    var consoleText = document.getElementById('console-text');
+    var chatInput = document.getElementById('chat-input');
+    var ctx = document.getElementById("ctx").getContext("2d");
+    ctx.font = '30px Arial';
 
+    // initalize connection
+    var socket = io();
 
-  	//Login
-  	$( ".login-container" ).submit(function( event ) {
+    //Output
+    var login = function(user, password){
+      socket.emit('login',{
+        reason: 'logged out'
+      });
+    };
+    //Login
+    $( ".login-container" ).submit(function( event ) {
 
-  		var user = "test";
-  		var password = "testpass";
-  		//TODO VALIDATION
-  		login(user, password);
+      var user = "test";
+      var password = "testpass";
+      //TODO VALIDATION
+      login(user, password);
 
-  		event.preventDefault();
-	});	
+      event.preventDefault();
+    });
 
+    //Add To Chat socket listener
+    socket.on('addToChat', function(data){chatText.innerHTML += '<div>' + data + '</div>'});
+    //Listen for the return of the command evaluation
+    socket.on('evalAnswer', function(data){
+      consoleText.innerHTML += '<div class="command-eval">' + data + '</div>';
+      console.log(data);
+    });
 
-  	//Canvas
-  	// console.log('do canvas shit');
-  	var ctx = document.getElementById("ctx").getContext("2d");
-  	ctx.font = '30px Arial';
-  	socket.on('newPosition', function(data){
+    //Add To Chat Submit Function
+    $('#chat-form').submit(function(e) {
+      e.preventDefault();
+      console.log(chatInput.value[0]);
+      if(chatInput.value === '/clear'){
+        consoleText.innerHTML = '';
+      } else if (chatInput.value[0] === '/') {
+        //message is command
+        console.log('evalServer');
+        socket.emit('evalServer', chatInput.value.slice(1));
+      }
+      else {
+        //message is message
+        socket.emit('sendMsgToServer', chatInput.value);
+      }
+      chatInput.value = '';
+    });
+
+		/*
+     * New Position
+     * Update the player location
+     */
+  	socket.on('newPositions', function(data){
 		ctx.clearRect(0,0,500,500);
-		for(var i in data) {
-			var player = data[i];
-			ctx.fillText(player.number,player.x,player.y);
-		}
+		for(var i = 0; i < data.player.length; i++)
+			ctx.fillText(data.player[i].number,data.player[i].x,data.player[i].y);
+
+    for(var i = 0; i < data.bullet.length; i++)
+      ctx.fillRect(data.bullet[i].x - 5, data.bullet[i].y - 5, 10, 10);
   	});
 
   	/*
@@ -105,7 +144,7 @@
   			socket.emit('keyPress', {inputId:'left', state:true});
   		else if(event.keyCode === w)
   			socket.emit('keyPress', {inputId:'up', state:true});
-  	}
+  	};
 	/*
   	*  KeyUp Event Handler 
   	*/

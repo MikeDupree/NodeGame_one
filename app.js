@@ -31,17 +31,17 @@ var Entity = function(){
 		y:250,
 		spdX:0,
 		spdY:0,
-		id:"",
-	}
+		id:""
+	};
 	self.update = function(){
 		self.updatePosition();
-	}
+	};
 	self.updatePosition = function(){
 		self.x += self.spdX;
 		self.y += self.spdY;
-	}
+	};
 	return self;
-}
+};
 /*
 *	Player Object Constructor
 */
@@ -60,7 +60,7 @@ var Player = function(pid){
 	self.update = function(){
 		self.updateSpd();
 		super_update();
-	}
+	};
 
 	//update position function
 	self.updateSpd = function(){
@@ -79,11 +79,12 @@ var Player = function(pid){
 			self.spdY = self.maxSpd;
 		else
 			self.spdY = 0;
-	}
+	};
 
 	Player.list[pid] = self;//add player to the list of players
 	return self;
-}
+};
+
 Player.list = {};
 Player.onConnect = function(socket){
 	//Store player info
@@ -104,16 +105,16 @@ Player.onConnect = function(socket){
 		}
 	});
 
-}// !- OnConnect
+};// !- OnConnect
 
 Player.onDisconnect = function(socket){
 	delete Player.list[socket.id];
-}// !- onDisconnect
+};// !- onDisconnect
 Player.update = function(){
 	var pack = [];
 	//pack loop
 	for(var i in Player.list) {
-		var player = Player.list[i]
+		var player = Player.list[i];
 		player.update();
 		pack.push({
 			x:player.x,
@@ -123,15 +124,53 @@ Player.update = function(){
 
 	}
 	return pack;
-}
+};
 // !- Player Object
 
+// Bullet Object
+var Bullet = function(angle){
+	var self = Entity();
+	self.id = Math.random();//todo refactor
+	self.spdX = Math.cos(angle/180*Math.PI) * 10;
+	self.spdY = Math.sin(angle/180*Math.PI) * 10;
 
+	self.timer = 0;
+	self.toRemove = false;
+	var super_update = self.update;
+	self.update = function(){
+		if(self.timer++ > 100)
+			self.toRemove = true;
+    super_update();
+	};
+	Bullet.list[self.id] = self;
+	return self;
+};
+Bullet.list = {};
+Bullet.update = function(){
 
+  if(Math.random() < 1){
+    Bullet(Math.random()*360);//bullet in random direction
+  }
+
+	var pack = [];
+	//pack loop
+	for(var i in Bullet.list) {
+		var bullet = Bullet.list[i];
+		bullet.update();
+		pack.push({
+			x:bullet.x,
+			y:bullet.y,
+			number:bullet.number
+		});
+
+	}
+	return pack;
+};
 
 /*
 * Server Connection
 */
+var DEBUG = true;
 var io = require('socket.io')(serv,{});
 io.sockets.on('connection', function(socket){
 
@@ -153,6 +192,28 @@ io.sockets.on('connection', function(socket){
 		Player.onDisconnect(socket);
 	});
 
+  //Send msg
+  socket.on('sendMsgToServer', function(data){
+    var playerName = ("" + socket.id).slice(2,7);
+    for(var i in SOCKET_LIST){
+      SOCKET_LIST[i].emit('addToChat', playerName + ':' + data);
+    }
+  });
+
+  //Evaluate command
+  socket.on('evalServer', function(data) {
+    var res = 'Command not found!';
+    try {
+      if (!DEBUG) {return;}
+      res = eval(data);
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        console.log(e.message);
+      }
+    }
+    socket.emit('evalAnswer', res);
+  });
+
 });
 
 
@@ -160,10 +221,15 @@ io.sockets.on('connection', function(socket){
 
 // Game-loop
 setInterval(function() {
-	var pack = Player.update();
+
+  var pack = {
+    player:Player.update(),
+    bullet:Bullet.update()
+  };
+
 	for(var i in SOCKET_LIST) {
 		var socket = SOCKET_LIST[i];
-		socket.emit('newPosition', pack);
+		socket.emit('newPositions', pack);
 	}
 },1000/25);// !- Game-loop
 
