@@ -51,7 +51,7 @@
 
   <!--Message Container-->
   <div id="chat-text" style="width:500px; height:150px; border: 1px solid #000000; overflow-y: scroll;">
-    <div style="text-align: center;">::Message Board!::</div>
+    <!--<div style="text-align: center;">::Message Board!::</div>-->
   </div>
   <form id="chat-form" style="padding: 5px 0 0 0;">
     <input type="text" id="chat-input" style="width: 500px;" value="" name="message_area">
@@ -128,7 +128,7 @@
   	});
 
   	/*
-  	*  KeyDown Event Handler 
+  	*  Key Down Event Handler
   	*/
   	var d = 68;
   	var a = 65;
@@ -145,8 +145,9 @@
   		else if(event.keyCode === w)
   			socket.emit('keyPress', {inputId:'up', state:true});
   	};
-	/*
-  	*  KeyUp Event Handler 
+
+	  /*
+  	*  Key Up Event Handler
   	*/
   	document.onkeyup = function(event){
   		if(event.keyCode === d)
@@ -157,7 +158,36 @@
   			socket.emit('keyPress', {inputId:'left', state:false});
   		else if(event.keyCode === w)
   			socket.emit('keyPress', {inputId:'up', state:false});
-  	}
+  	};
+
+    /*
+     *  Mouse Down Event Handler
+     */
+//    $(document).mousemove(function (event) {
+//      console.log('jquery down');
+//      socket.emit('keypress', {inputId:'attack',state:true})
+//    });
+  	document.onmousedown = function (event) {
+  	  console.log('doc.m down');
+      socket.emit('keyPress', {inputId:'attack',state:true})
+    };
+
+    /*
+     *  Mouse up Event Handler
+     */
+    document.onmouseup = function (event) {
+      socket.emit('keyPress', {inputId:'attack',state:false})
+    };
+
+    /**
+     * Mouse Angle Function
+     */
+    document.onmousemove = function (event) {
+      var x = -250 + event.clientX - 8;
+      var y = -250 + event.clientY - 8;
+      var angle = Math.atan2(y,x) / Math.PI * 100;
+      socket.emit('keyPress', {inputId:'mouseAngle', state:angle})
+    }
   </script>
 </body>
 </html>

@@ -53,16 +53,32 @@ var Player = function(pid){
 	self.pressingRight = false;
 	self.pressingLeft = false;
 	self.pressingUp = false;
-	self.pressingDown = false;
+  self.pressingDown = false;
+  self.pressingAttack = false;
+  self.mouseAngle = 0;
 	self.maxSpd = 10;
 
+  //Player.update()
 	var super_update = self.update;
 	self.update = function(){
 		self.updateSpd();
 		super_update();
+
+    //Player Attack !
+    if(self.pressingAttack){
+      // console.log(self.mouseAngle);//
+      self.shootBullet(self.mouseAngle);
+    }
 	};
 
-	//update position function
+	//Player.shootBullet()
+	self.shootBullet = function(angle){
+    var b = Bullet(angle);//bullet in random direction
+    b.x = self.x;
+    b.y = self.y;
+  };
+
+	//Player.updateSpd()
 	self.updateSpd = function(){
 		//Handle LEFT/ Right
 		if( self.pressingRight )
@@ -103,6 +119,13 @@ Player.onConnect = function(socket){
 		else if(data.inputId === 'down') {
 			player.pressingDown = data.state;
 		}
+    else if(data.inputId === 'attack') {
+      player.pressingAttack = data.state;
+    }
+    else if(data.inputId === 'mouseAngle') {
+      player.mouseAngle = data.state;
+    }
+
 	});
 
 };// !- OnConnect
@@ -131,8 +154,11 @@ Player.update = function(){
 var Bullet = function(angle){
 	var self = Entity();
 	self.id = Math.random();//todo refactor
-	self.spdX = Math.cos(angle/180*Math.PI) * 10;
-	self.spdY = Math.sin(angle/180*Math.PI) * 10;
+  // console.log('Bullet : ' + angle);
+  console.log('self.spdX :: ' + Math.cos(angle/180*Math.PI) * 10);
+  console.log('self.spdY :: ' + Math.sin(angle/180*Math.PI) * 10);
+	self.spdX = Math.cos(angle / 180 * Math.PI) * 10;
+	self.spdY = Math.sin(angle / 180 * Math.PI) * 10;
 
 	self.timer = 0;
 	self.toRemove = false;
@@ -147,10 +173,6 @@ var Bullet = function(angle){
 };
 Bullet.list = {};
 Bullet.update = function(){
-
-  if(Math.random() < 1){
-    Bullet(Math.random()*360);//bullet in random direction
-  }
 
 	var pack = [];
 	//pack loop
