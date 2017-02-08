@@ -25,51 +25,76 @@
 <body>
 
 	<!-- Login Container -->
-	<div class="login" style="display:none;width:400px;margin:16pxauto;font-size: 16px;">
-	  <div class="login-triangle" style="width: 0;margin-right: auto;margin-left: auto;border: 12px solid transparent;border-bottom-color: #28d;"></div>
-	  
-	  <h2 class="login-header" style="margin-top: 0;margin-bottom: 0;background: #28d;padding: 20px;font-size: 1.4em;font-weight: normal;text-align: center;text-transform: uppercase;color: #fff;">Log in</h2>
-
-	  <form class="login-container" style="background: #ebebeb;padding: 12px;">
-	    <p style="padding: 12px;margin-top: 0;margin-bottom: 0;">
-	    <input 
-	    style="border-color: #888;box-sizing: border-box;display: block;width: 100%;border-width: 1px;border-style: solid;padding: 16px;outline: 0;font-family: inherit;font-size: 0.95em;" type="email" placeholder="Email"></p>
-	    <p style="padding: 12px;margin-top: 0;margin-bottom: 0;">
-	    <input style="border-color: #888;box-sizing: border-box;display: block;width: 100%;border-width: 1px;border-style: solid;padding: 16px;outline: 0;font-family: inherit;font-size: 0.95em;" type="password" placeholder="Password"></p>
-	    <p style="padding: 12px;margin-top: 0;margin-bottom: 0;">
-	    <input 
-	     type="submit" value="Login" style="background: #28d;border-color: transparent;color: #fff;cursor: pointer;"></p>
-	  </form>
+	<div id="sign-in-container" class="login" style="width:400px;margin:16px auto;font-size: 16px;">
+    Username: <input id="sign-in-username" type="text"><br>
+    Password: <input id="sign-in-password" type="password"><br>
+    <div style="padding: 5px 0;"></div>
+    <button style="margin-right:15px;" id="sign-in-signIn">Sign In</button>
+    <button id="sign-in-signUp">Sign Up</button>
 	</div>
 
-  <div id="console-text" style="width:500px; height:150px; border: 1px solid #000000; overflow-y: scroll; color: lawngreen; background-color: black;">
-    <div style="text-align: center;"></div>
+  <div id="game-container" style="display: none;">
+    <div id="console-text" style="width:500px; height:150px; border: 1px solid #000000; overflow-y: scroll; color: lawngreen; background-color: black;">
+      <div style="text-align: center;"></div>
+    </div>
+
+    <!-- Game Canvas  -->
+    <canvas id="ctx" class="canvas" width="500" height="500" style="border:1px solid black;"></canvas>
+
+    <!--Message Container-->
+    <div id="chat-text" style="width:500px; height:150px; border: 1px solid #000000; overflow-y: scroll;">
+      <!--<div style="text-align: center;">::Message Board!::</div>-->
+    </div>
+    <form id="chat-form" style="padding: 5px 0 0 0;">
+      <input type="text" id="chat-input" style="width: 500px;" value="" name="message_area">
+    </form>
+
   </div>
-
-	<!-- Game Canvas  -->
-	<canvas id="ctx" class="canvas" width="500" height="500" style="border:1px solid black;"></canvas>
-
-  <!--Message Container-->
-  <div id="chat-text" style="width:500px; height:150px; border: 1px solid #000000; overflow-y: scroll;">
-    <!--<div style="text-align: center;">::Message Board!::</div>-->
-  </div>
-  <form id="chat-form" style="padding: 5px 0 0 0;">
-    <input type="text" id="chat-input" style="width: 500px;" value="" name="message_area">
-  </form>
-
-
   <!--SCRIPTS-->
   <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
   <script type="text/javascript">
 
+    // initalize connection
+    var socket = io();
+
+    //Sign In
+    var sign_in_container = document.getElementById('sign-in-container');
+    var client_username = document.getElementById('sign-in-username');
+    var client_password = document.getElementById('sign-in-password');
+    var sign_in_button = document.getElementById('sign-in-signIn');
+    var sign_up_button = document.getElementById('sign-in-signUp');
+    var game_container = document.getElementById('game-container');
+    //Click Button Sign In
+    sign_in_button.onclick = function () {
+      socket.emit('signIn', {username:client_username.value,password:client_password.value});
+    };
+    //Click Button Sign Up
+    sign_up_button.onclick = function () {
+      socket.emit('signUp', {username:client_username.value,password:client_password.value});
+    };
+    socket.on('signInResponse', function (data) {
+      if(data.success){
+        sign_in_container.style.display = 'none';
+        game_container.style.display = 'inline-block';
+      } else {
+        alert('Sign in unsuccessful');
+      }
+    });
+    socket.on('signUpResponse', function (data) {
+      if(data.success){
+        alert('Sign up successful');
+      } else {
+        alert('Sign up unsuccessful');
+      }
+    });
+
+    //Game
     var chatText = document.getElementById('chat-text');
     var consoleText = document.getElementById('console-text');
     var chatInput = document.getElementById('chat-input');
     var ctx = document.getElementById("ctx").getContext("2d");
     ctx.font = '30px Arial';
 
-    // initalize connection
-    var socket = io();
 
     //Output
     var login = function(user, password){
@@ -163,12 +188,7 @@
     /*
      *  Mouse Down Event Handler
      */
-//    $(document).mousemove(function (event) {
-//      console.log('jquery down');
-//      socket.emit('keypress', {inputId:'attack',state:true})
-//    });
   	document.onmousedown = function (event) {
-  	  console.log('doc.m down');
       socket.emit('keyPress', {inputId:'attack',state:true})
     };
 
@@ -185,7 +205,7 @@
     document.onmousemove = function (event) {
       var x = -250 + event.clientX - 8;
       var y = -250 + event.clientY - 8;
-      var angle = Math.atan2(y,x) / Math.PI * 100;
+      var angle = Math.atan2(y,x) / Math.PI * 180;
       socket.emit('keyPress', {inputId:'mouseAngle', state:angle})
     }
   </script>

@@ -66,7 +66,6 @@ var Player = function(pid){
 
     //Player Attack !
     if(self.pressingAttack){
-      // console.log(self.mouseAngle);//
       self.shootBullet(self.mouseAngle);
     }
 	};
@@ -154,9 +153,6 @@ Player.update = function(){
 var Bullet = function(angle){
 	var self = Entity();
 	self.id = Math.random();//todo refactor
-  // console.log('Bullet : ' + angle);
-  console.log('self.spdX :: ' + Math.cos(angle/180*Math.PI) * 10);
-  console.log('self.spdY :: ' + Math.sin(angle/180*Math.PI) * 10);
 	self.spdX = Math.cos(angle / 180 * Math.PI) * 10;
 	self.spdY = Math.sin(angle / 180 * Math.PI) * 10;
 
@@ -192,21 +188,59 @@ Bullet.update = function(){
 /*
 * Server Connection
 */
+//todo add DB
 var DEBUG = true;
+var USERS = {
+  //username:password
+  "mike":"google",
+  "Mike":"google"
+};
+
+var isValidPassword = function(data, callback){
+  setTimeout(function () {
+    callback( USERS[data.username] === data.password );
+  },10);
+};
+var isUsernameTaken = function(data, callback){
+  setTimeout(function () {
+    callback( USERS[data.username] );
+  },10);
+};
+var addUser = function(data, callback){
+  USERS[data.username] = data.password;
+  callback();
+};
+
 var io = require('socket.io')(serv,{});
 io.sockets.on('connection', function(socket){
 
 	socket.id = Math.random();//todo make better id, number 
 	SOCKET_LIST[socket.id] = socket;
 
-	Player.onConnect(socket);
+  //Sign In
+  socket.on('signIn', function(data){
+    isValidPassword(data, function(res) {
+      if(res){
+        Player.onConnect(socket);
+        socket.emit('signInResponse', {success:true})
+      } else {
+        socket.emit('signInResponse', {success:false})
+      }
+    });
+  });
+  //Sign Up
+  socket.on('signUp', function(data){
+    isUsernameTaken(data, function(res) {
+      if (res) {
+        socket.emit('signUpResponse', {success: false});
+      } else {
+        addUser(data, function(){
+          socket.emit('signUpResponse', {success: true});
+        });
+      }
+    });
+  });
 
-	//todo
-	//login function
-	socket.on('login',function(user, password){
-		console.log('Request Login Screen : user:' + user );
-		return 1;
-	});
 
 	//Remove player on disconnect
 	socket.on('disconnect', function(){
@@ -231,6 +265,7 @@ io.sockets.on('connection', function(socket){
     } catch (e) {
       if (e instanceof SyntaxError) {
         console.log(e.message);
+        res = e.message;
       }
     }
     socket.emit('evalAnswer', res);
