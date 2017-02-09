@@ -95,6 +95,80 @@
     var ctx = document.getElementById("ctx").getContext("2d");
     ctx.font = '30px Arial';
 
+    //Player : Constructor
+    var Player = function(initPack){
+      var self = {};
+      self.id = initPack.id;
+      self.number = initPack.number;
+      self.x = initPack.x;
+      self.y = initPack.y;
+      Player.list[self.id] = self;
+    };
+    Player.list = {};
+
+    //Bullet : Constructor
+    var Bullet = function(initPack){
+      var self = {};
+      self.id = initPack.id;
+      self.number = initPack.number;
+      self.x = initPack.x;
+      self.y = initPack.y;
+      Bullet.list[self.id] = self;
+    };
+    Bullet.list = {};
+
+    //Listen : Init
+    socket.on('init', function (data) {
+      //load players
+      for(var p = 0; p < data.player.length; p++){
+        new Player(data.player[p]);
+      }
+      //load bullets
+      for(var b = 0; b < data.player.length; b++){
+        new Bullet(data.bullet[b]);
+      }
+    });
+
+    //Listen : Update
+    socket.on('update', function (data) {
+      for(var p = 0; p < data.player.length; p++){
+        var p_pack = data.player[p];
+        var player = Player.list[p_pack.id];
+        if(player){
+          if(p_pack.x !== undefined){
+            player.x = p_pack.x;
+          }
+          if(p_pack.y !== undefined){
+            player.y = p_pack.y;
+          }
+        }
+      }
+      for(var b = 0; b < data.bullet.length; b++){
+        var b_pack = data.bullet[b];
+        var bullet = Bullet.list[b_pack.id];
+        if(bullet){
+          if(b_pack.x !== undefined){
+            bullet.x = b_pack.x;
+          }
+          if(b_pack.y !== undefined){
+            bullet.y = b_pack.y;
+          }
+        }
+      }
+    });
+
+    //Listen : Remove
+    socket.on('remove', function (data) {
+      for(var p = 0; p < data.player.length; p++){
+        delete Player.list[data.player[p]];
+      }
+      for(var b = 0; b < data.player.length; b++){
+        delete Bullet.list[data.bullet[p]];
+
+      }
+    });
+
+
 
     //Output
     var login = function(user, password){
@@ -139,18 +213,14 @@
       chatInput.value = '';
     });
 
-		/*
-     * New Position
-     * Update the player location
-     */
-  	socket.on('newPositions', function(data){
-		ctx.clearRect(0,0,500,500);
-		for(var i = 0; i < data.player.length; i++)
-			ctx.fillText(data.player[i].number,data.player[i].x,data.player[i].y);
+    setInterval(function () {
+      ctx.clearRect(0,0,500,500);
+      for(var i = 0; i < data.player.length; i++)
+        ctx.fillText(data.player[i].number,data.player[i].x,data.player[i].y);
 
-    for(var i = 0; i < data.bullet.length; i++)
-      ctx.fillRect(data.bullet[i].x - 5, data.bullet[i].y - 5, 10, 10);
-  	});
+      for(var i = 0; i < data.bullet.length; i++)
+        ctx.fillRect(data.bullet[i].x - 5, data.bullet[i].y - 5, 10, 10);
+    }, 40);
 
   	/*
   	*  Key Down Event Handler
