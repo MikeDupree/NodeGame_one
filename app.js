@@ -1,6 +1,11 @@
 //initialize our shit!
 console.log("initializing...");
 
+var mongojs = require("mongojs");
+var db = mongojs('localhost:27017/myGame', ['account', 'progress']);
+
+db.account.insert({username:"b",password:"bb"});
+
 var express = require('express');
 var app = express();
 var serv = require('http').Server(app);
