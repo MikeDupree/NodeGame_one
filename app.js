@@ -4,8 +4,6 @@ console.log("initializing...");
 var mongojs = require("mongojs");
 var db = mongojs('localhost:27017/myGame', ['account', 'progress']);
 
-db.account.insert({username:"b",password:"bb"});
-
 var express = require('express');
 var app = express();
 var serv = require('http').Server(app);
@@ -242,18 +240,31 @@ var USERS = {
 };
 
 var isValidPassword = function(data, callback){
-  setTimeout(function () {
-    callback( USERS[data.username] === data.password );
-  },10);
+  db.account.find({username:data.username, password:data.password}, function (error, result) {
+    if(result.length > 0){
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
 };
 var isUsernameTaken = function(data, callback){
-  setTimeout(function () {
-    callback( USERS[data.username] );
-  },10);
+  db.account.find({username:data.username}, function () {
+    if(result.length > 0){
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
 };
 var addUser = function(data, callback){
-  USERS[data.username] = data.password;
-  callback();
+  db.account.insert({username:data.username, password:data.password}, function (error, result) {
+    if(result.length > 0){
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
 };
 
 var io = require('socket.io')(serv,{});
